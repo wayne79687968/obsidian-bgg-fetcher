@@ -55,8 +55,29 @@ playingtime: ${playingTime}
 own: ${own}
 prevowned: ${prevOwned}
 fortrade: ${forTrade}
----
 `;
+
+            const id = item.getAttribute('objectid');
+            if (id) {
+                const gameResponse = await fetch('https://api.geekdo.com/xmlapi2/thing?id=' + id + '&stats=1');
+                const gameText = await gameResponse.text();
+                const gameDoc = parser.parseFromString(gameText, 'text/xml');
+
+                const designers = Array.from(gameDoc.querySelectorAll('link[type="boardgamedesigner"]')).map(link => link.getAttribute('value')).join(', ') ? ? '';
+                const artists = Array.from(gameDoc.querySelectorAll('link[type="boardgameartist"]')).map(link => link.getAttribute('value')).join(', ') ? ? '';
+                const rank = gameDoc.querySelector('rank[type="subtype"]').getAttribute('value') ? ? '';
+                const weight = gameDoc.querySelector('averageweight').getAttribute('value') ? ? '';
+                const score = gameDoc.querySelector('average').getAttribute('value') ? ? '';
+                content += `designers: ${designers}
+artists: ${artists}
+rank: ${rank}
+weight: ${weight}
+score: ${score}
+`;
+            }
+
+            content += `---`;
+
             if (name) {
                 console.log(content);
             }
