@@ -59,6 +59,8 @@ fortrade: ${forTrade}
 
             const id = item.getAttribute('objectid');
             if (id) {
+                await new Promise(resolve => setTimeout(resolve, 1000));
+
                 const gameResponse = await fetch('https://api.geekdo.com/xmlapi2/thing?id=' + id + '&stats=1');
                 const gameText = await gameResponse.text();
                 const gameDoc = parser.parseFromString(gameText, 'text/xml');
