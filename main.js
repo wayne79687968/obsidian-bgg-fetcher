@@ -1,4 +1,4 @@
-const { Plugin, TFile, Setting, PluginSettingTab } = require('obsidian');
+const { Plugin, TFile, Notice, Setting, PluginSettingTab } = require('obsidian');
 
 class BoardGameFetcherPlugin extends Plugin {
     settings = {};
@@ -24,6 +24,8 @@ class BoardGameFetcherPlugin extends Plugin {
     }
 
     async updateBoardGames() {
+        new Notice('Board game update started.');
+
         const response = await fetch('https://api.geekdo.com/xmlapi2/collection?username=' + this.settings.username + '&stats=1');
         const text = await response.text();
 
@@ -133,6 +135,8 @@ score:: ${score}`;
                 await this.app.vault.delete(file);
             }
         }
+
+        new Notice('Board game update completed.');
     }
 }
 
