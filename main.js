@@ -95,7 +95,31 @@ score: ${score}
             content += `---`;
 
             if (name) {
+                // Create or update the note
+                const notePath = this.settings.notePath + '/' + name + '.md';
                 console.log(content);
+
+                let file = this.app.vault.getAbstractFileByPath(notePath);
+                if (file instanceof TFile) {
+                    await this.app.vault.modify(file, content);
+                } else {
+                    await this.app.vault.create(notePath, content);
+                }
+
+                // Remove the note from the list of current notes
+                const index = currentNotes.indexOf(sanitized_name);
+                if (index !== -1) {
+                    currentNotes.splice(index, 1);
+                }
+            }
+        }
+
+        // Delete any notes that are no longer in the XML data
+        for (const noteName of currentNotes) {
+            const notePath = `Inbox/Boardgame/${noteName}.md`;
+            let file = this.app.vault.getAbstractFileByPath(notePath);
+            if (file instanceof TFile) {
+                await this.app.vault.delete(file);
             }
         }
     }
