@@ -46,6 +46,7 @@ class BoardGameFetcherPlugin extends Plugin {
             let content = '';
 
             const name = nameElement.textContent;
+            const sanitized_name = name.replace(/[\\/*"<>:|?]/g, '')
             const yearPublished = yearPublishedElement ? yearPublishedElement.textContent : '';
             const image = imageElement ? imageElement.textContent : '';
             const minPlayers = statsElement ? statsElement.getAttribute('minplayers') : '';
@@ -57,46 +58,56 @@ class BoardGameFetcherPlugin extends Plugin {
             const prevOwned = statusElement ? (statusElement.getAttribute('prevowned') === '1' ? 'yes' : 'no') : 'no';
             const forTrade = statusElement ? (statusElement.getAttribute('fortrade') === '1' ? 'yes' : 'no') : 'no';
 
-            content = `---
-title: ${name}
-yearpublished: ${yearPublished}
-image: ${image}
-minplayers: ${minPlayers}
-maxplayers: ${maxPlayers}
-minplaytime: ${minPlaytime}
-maxplaytime: ${maxPlaytime}
-playingtime: ${playingTime}
-own: ${own}
-prevowned: ${prevOwned}
-fortrade: ${forTrade}
+            content = `title:: ${sanitized_name}
+yearpublished:: ${yearPublished}
+image:: ${image}
+minplayers:: ${minPlayers}
+maxplayers:: ${maxPlayers}
+minplaytime:: ${minPlaytime}
+maxplaytime:: ${maxPlaytime}
+playingtime:: ${playingTime}
+own:: ${own}
+prevowned:: ${prevOwned}
+fortrade:: ${forTrade}
 `;
 
             const id = item.getAttribute('objectid');
             if (id) {
-                await new Promise(resolve => setTimeout(resolve, 1000));
+                let retryCount = 0;
+                let gameText = "";
+                while (retryCount < 5) {
+                    try {
+                        await new Promise(resolve => setTimeout(resolve, 1000));
 
-                const gameResponse = await fetch('https://api.geekdo.com/xmlapi2/thing?id=' + id + '&stats=1');
-                const gameText = await gameResponse.text();
+                        const gameResponse = await fetch('https://api.geekdo.com/xmlapi2/thing?id=' + id + '&stats=1');
+                        gameText = await gameResponse.text();
+                        break;
+                    } catch (error) {
+                        retryCount++;
+                        await new Promise(resolve => setTimeout(resolve, 10000));
+                    }
+                }
+                if (retryCount >= 5) {
+                    new Notice('Failed to update board game: ' + id);
+                    continue;
+                }
                 const gameDoc = parser.parseFromString(gameText, 'text/xml');
-
-                const designers = Array.from(gameDoc.querySelectorAll('link[type="boardgamedesigner"]')).map(link => link.getAttribute('value')).join(', ') ? ? '';
-                const artists = Array.from(gameDoc.querySelectorAll('link[type="boardgameartist"]')).map(link => link.getAttribute('value')).join(', ') ? ? '';
+                const designers = Array.from(gameDoc.querySelectorAll('link[type="boardgamedesigner"]')).map(link => '"' + link.getAttribute('value') + '"').join(', ') ? ? '';
+                const artists = Array.from(gameDoc.querySelectorAll('link[type="boardgameartist"]')).map(link => '"' + link.getAttribute('value') + '"').join(', ') ? ? '';
                 const rank = gameDoc.querySelector('rank[type="subtype"]').getAttribute('value') ? ? '';
                 const weight = gameDoc.querySelector('averageweight').getAttribute('value') ? ? '';
                 const score = gameDoc.querySelector('average').getAttribute('value') ? ? '';
-                content += `designers: ${designers}
-artists: ${artists}
-rank: ${rank}
-weight: ${weight}
-score: ${score}
-`;
+                content += `designers:: ${designers}
+artists:: ${artists}
+rank:: ${rank}
+weight:: ${weight}
+score:: ${score}`;
+
             }
 
-            content += `---`;
-
-            if (name) {
+            if (sanitized_name) {
                 // Create or update the note
-                const notePath = this.settings.notePath + '/' + name + '.md';
+                const notePath = this.settings.notePath + '/' + sanitized_name + '.md';
                 console.log(content);
 
                 let file = this.app.vault.getAbstractFileByPath(notePath);
