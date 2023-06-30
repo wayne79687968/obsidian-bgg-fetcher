@@ -1,16 +1,30 @@
-const { Plugin, TFile } = require('obsidian');
+const { Plugin, TFile, Setting, PluginSettingTab } = require('obsidian');
 
 class BoardGameFetcherPlugin extends Plugin {
+    settings = {};
+
     async onload() {
+        await this.loadSettings();
+
         this.addCommand({
             id: 'update-boardgames',
             name: 'Update Board Games',
             callback: () => this.updateBoardGames()
         });
+
+        this.addSettingTab(new BoardGameFetcherSettingTab(this.app, this));
+    }
+
+    async loadSettings() {
+        this.settings = Object.assign({}, await this.loadData());
+    }
+
+    async saveSettings() {
+        await this.saveData(this.settings);
     }
 
     async updateBoardGames() {
-        const response = await fetch('https://api.geekdo.com/xmlapi2/collection?username=wayne79687968&stats=true');
+        const response = await fetch('https://api.geekdo.com/xmlapi2/collection?username=' + this.settings.username + '&stats=1');
         const text = await response.text();
 
         // Parse the XML data
@@ -84,6 +98,43 @@ score: ${score}
                 console.log(content);
             }
         }
+    }
+}
+
+class BoardGameFetcherSettingTab extends PluginSettingTab {
+    plugin;
+
+    constructor(app, plugin) {
+        super(app, plugin);
+        this.plugin = plugin;
+    }
+
+    display() {
+        let { containerEl } = this;
+
+        containerEl.empty();
+
+        new Setting(containerEl)
+            .setName('BoardGameGeek Username')
+            .setDesc('Enter your BoardGameGeek username.')
+            .addText(text => text
+                .setPlaceholder('Enter your username')
+                .setValue(this.plugin.settings.username || '')
+                .onChange(async(value) => {
+                    this.plugin.settings.username = value;
+                    await this.plugin.saveSettings();
+                }));
+
+        new Setting(containerEl)
+            .setName('Note Path')
+            .setDesc('Enter the path where the notes should be saved.')
+            .addText(text => text
+                .setPlaceholder('Enter note path')
+                .setValue(this.plugin.settings.notePath || '')
+                .onChange(async(value) => {
+                    this.plugin.settings.notePath = value;
+                    await this.plugin.saveSettings();
+                }));
     }
 }
 
