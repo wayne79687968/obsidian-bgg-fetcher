@@ -39,7 +39,7 @@ class BoardGameFetcherPlugin extends Plugin {
         // For each board game in the XML data, create or update a note
         const boardGames = Array.from(xmlDoc.querySelectorAll('item'));
         for (const item of boardGames) {
-            const nameElement = item.querySelector('name');
+            const nameElement = item.querySelector('originalname') ?? item.querySelector('name');
             const yearPublishedElement = item.querySelector('yearpublished');
             const imageElement = item.querySelector('image');
             const statsElement = item.querySelector('stats');
