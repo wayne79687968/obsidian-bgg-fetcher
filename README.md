@@ -1,4 +1,4 @@
-# Board Game Fetcher Plugin
+## Board Game Fetcher Plugin
 
 The Board Game Fetcher Plugin is an Obsidian plugin that allows you to fetch and update information about board games from BoardGameGeek. It creates or updates notes for each board game in your collection, including details such as the game's name, year of publication, image, player count, playtime, ownership status, and more.
 
@@ -31,24 +31,43 @@ The Board Game Fetcher Plugin is an Obsidian plugin that allows you to fetch and
 
 The plugin creates or updates notes for each board game in the specified note path. The note content follows the following format:
 
+```markdown
+---
+title: "[Game Name]"
+yearpublished: [Year Published]
+image: "[URL of the Game's Image]"
+minplayers: [Minimum Number of Players]
+maxplayers: [Maximum Number of Players]
+minplaytime: [Minimum Playtime (in minutes)]
+maxplaytime: [Maximum Playtime (in minutes)]
+playingtime: [Average Playing Time (in minutes)]
+own: [Whether you own the game (yes/no)]
+prevowned: [Whether you previously owned the game (yes/no)]
+fortrade: [Whether the game is available for trade (yes/no)]
+obsidianUIMode: preview
+---
+
+>[!bgg]+ [`= this.title`](https://boardgamegeek.com/boardgame/[!bk-link-id])  
+>>[!multi-column|left|2]  
+>>![test|250]([!bk-image])  
+>>
+>>>[!data]+ Data  
+>>>- Year Published: `= this.yearpublished`  
+>>>- Players: `= this.minplayers` ~ `= this.maxplayers`  
+>>>- Play Time: `= this.minplaytime` ~ `= this.maxplaytime` min  
+>>>- Rank: `= this.rank`  
+>>>- Weight (0~5): `= this.weight`  
+>>>- Score (1~10): **`= this.score`**  
+>>>- Designers: `= this.designers`  
+>>>- Artists: `= this.artists`  
+
+>>[!description]+ Description  
+>>[!bk-description]
+
+[!comments]
 ```
-title:: [Game Name]
-yearpublished:: [Year Published]
-image:: [URL of the Game's Image]
-minplayers:: [Minimum Number of Players]
-maxplayers:: [Maximum Number of Players]
-minplaytime:: [Minimum Playtime (in minutes)]
-maxplaytime:: [Maximum Playtime (in minutes)]
-playingtime:: [Average Playing Time (in minutes)]
-own:: [Whether you own the game (yes/no)]
-prevowned:: [Whether you previously owned the game (yes/no)]
-fortrade:: [Whether the game is available for trade (yes/no)]
-designers:: [Designers of the game]
-artists:: [Artists of the game]
-rank:: [Game's Rank]
-weight:: [Game's Weight]
-score:: [Game's Average Score]
-```
+
+**Note**: Replace `[!bk-link-id]`, `[!bk-image]`, and `[!bk-description]` with the corresponding values fetched from BoardGameGeek.
 
 ## Support
 
