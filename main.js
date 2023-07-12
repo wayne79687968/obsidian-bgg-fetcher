@@ -59,9 +59,8 @@ class BoardGameFetcherPlugin extends Plugin {
             const own = statusElement ? (statusElement.getAttribute('own') === '1' ? 'yes' : 'no') : 'no';
             const prevOwned = statusElement ? (statusElement.getAttribute('prevowned') === '1' ? 'yes' : 'no') : 'no';
             const forTrade = statusElement ? (statusElement.getAttribute('fortrade') === '1' ? 'yes' : 'no') : 'no';
-            const title = name.replace(/["]/g, '');
             content = `\-\-\-
-title: "${title}"
+title: "${sanitized_name}"
 yearpublished: ${yearPublished}
 image: "${image}"
 minplayers: ${minPlayers}
