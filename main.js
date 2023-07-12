@@ -24,7 +24,7 @@ class BoardGameFetcherPlugin extends Plugin {
     }
 
     async updateBoardGames() {
-        new Notice('Board game update started.');
+        let notice = new Notice('Board game update started.');
 
         const response = await fetch('https://api.geekdo.com/xmlapi2/collection?username=' + this.settings.username + '&stats=1');
         const text = await response.text();
@@ -165,7 +165,7 @@ ${comments}`;
                 await this.app.vault.delete(file);
             }
         }
-
+        notice.hide();
         new Notice('Board game update completed.');
     }
 }
