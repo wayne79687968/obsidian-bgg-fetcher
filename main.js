@@ -59,21 +59,26 @@ class BoardGameFetcherPlugin extends Plugin {
             const own = statusElement ? (statusElement.getAttribute('own') === '1' ? 'yes' : 'no') : 'no';
             const prevOwned = statusElement ? (statusElement.getAttribute('prevowned') === '1' ? 'yes' : 'no') : 'no';
             const forTrade = statusElement ? (statusElement.getAttribute('fortrade') === '1' ? 'yes' : 'no') : 'no';
-
-            content = `title:: ${sanitized_name}
-yearpublished:: ${yearPublished}
-image:: ${image}
-minplayers:: ${minPlayers}
-maxplayers:: ${maxPlayers}
-minplaytime:: ${minPlaytime}
-maxplaytime:: ${maxPlaytime}
-playingtime:: ${playingTime}
-own:: ${own}
-prevowned:: ${prevOwned}
-fortrade:: ${forTrade}
+            const title = name.replace(/["]/g, '');
+            content = `\-\-\-
+title: "${title}"
+yearpublished: ${yearPublished}
+image: "${image}"
+minplayers: ${minPlayers}
+maxplayers: ${maxPlayers}
+minplaytime: ${minPlaytime}
+maxplaytime: ${maxPlaytime}
+playingtime: ${playingTime}
+own: ${own}
+prevowned: ${prevOwned}
+fortrade: ${forTrade}
+obsidianUIMode: preview
 `;
 
-            const id = item.getAttribute('objectid');
+            const id = item.getAttribute('objectid') ?? "";
+            let comments = "";
+            let description = "";
+
             if (id) {
                 let retryCount = 0;
                 let gameText = "";
@@ -81,7 +86,7 @@ fortrade:: ${forTrade}
                     try {
                         await new Promise(resolve => setTimeout(resolve, 1000));
 
-                        const gameResponse = await fetch('https://api.geekdo.com/xmlapi2/thing?id=' + id + '&stats=1');
+                        const gameResponse = await fetch('https://api.geekdo.com/xmlapi2/thing?id=' + id + '&stats=1&comments=1');
                         gameText = await gameResponse.text();
                         break;
                     } catch (error) {
@@ -94,23 +99,48 @@ fortrade:: ${forTrade}
                     continue;
                 }
                 const gameDoc = parser.parseFromString(gameText, 'text/xml');
-                const designers = Array.from(gameDoc.querySelectorAll('link[type="boardgamedesigner"]')).map(link => '"' + link.getAttribute('value') + '"').join(', ') ? ? '';
-                const artists = Array.from(gameDoc.querySelectorAll('link[type="boardgameartist"]')).map(link => '"' + link.getAttribute('value') + '"').join(', ') ? ? '';
-                const rank = gameDoc.querySelector('rank[type="subtype"]').getAttribute('value') ? ? '';
-                const weight = gameDoc.querySelector('averageweight').getAttribute('value') ? ? '';
-                const score = gameDoc.querySelector('average').getAttribute('value') ? ? '';
-                content += `designers:: ${designers}
-artists:: ${artists}
-rank:: ${rank}
-weight:: ${weight}
-score:: ${score}`;
-
+                const designers = Array.from(gameDoc.querySelectorAll('link[type="boardgamedesigner"]')).map(link => '- "' + link.getAttribute('value').replace(/["]/g, '') + '"').join('\n') ?? '';
+                const artists = Array.from(gameDoc.querySelectorAll('link[type="boardgameartist"]')).map(link => '- "' + link.getAttribute('value').replace(/["]/g, '') + '"').join('\n') ?? '';
+                const rank = gameDoc.querySelector('rank[type="subtype"]').getAttribute('value') ?? '';
+                const weight = gameDoc.querySelector('averageweight').getAttribute('value') ?? '';
+                const score = gameDoc.querySelector('average').getAttribute('value') ?? '';
+                
+                description = gameDoc.querySelector('description').textContent ?? '';
+                comments = Array.from(gameDoc.getElementsByTagName('comment')).slice(0, 50).map(el => `> [!score]+ ( ${el.getAttribute('rating')} )\n> ${el.getAttribute('value')}\n`).join('\n');
+                content += `id: ${id}
+designers: 
+${designers}
+artists: 
+${artists}
+rank: ${rank}
+weight: ${weight}
+score: ${score}
+`;
             }
+            
+            content += `\-\-\-
+>[!bgg]+ [\`= this.title\`](https://boardgamegeek.com/boardgame/${id})
+>>[!multi-column|left|2]
+>>![test|250](${image})
+>>
+>>>[!data]+ Data
+>>>- Year Published: \`= this.yearpublished\`
+>>>- Players: \`= this.minplayers\` ~ \`= this.maxplayers\`
+>>>- Play Time: \`= this.minplaytime\` ~ \`= this.maxplaytime\` min
+>>>- Rank: \`= this.rank\`
+>>>- Weight (0~5): \`= this.weight\`
+>>>- Score (1~10): **\`= this.score\`**
+>>>- Designers: \`= this.designers\`
+>>>- Artists: \`= this.artists\`
+>
+>>[!description]+ Description
+>>${description}
+
+${comments}`;
 
             if (sanitized_name) {
                 // Create or update the note
                 const notePath = this.settings.notePath + '/' + sanitized_name + '.md';
-                console.log(content);
 
                 let file = this.app.vault.getAbstractFileByPath(notePath);
                 if (file instanceof TFile) {
